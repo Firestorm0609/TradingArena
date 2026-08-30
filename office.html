@@ -7,527 +7,283 @@
     <meta http-equiv="refresh" content="60">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap');
-        
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        :root {
-            --bg: #08090d;
-            --card: #0f1117;
-            --border: #1a1d27;
-            --green: #00e676;
-            --red: #ff5252;
-            --blue: #448aff;
-            --orange: #ff9100;
-            --text: #e0e0e0;
-            --muted: #555;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-        
+        :root { --bg:#08090d; --card:#0f1117; --border:#1a1d27; --green:#00e676; --red:#ff5252; --blue:#448aff; --orange:#ff9100; --text:#e0e0e0; --muted:#555; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
         /* ── Floor ── */
         .floor {
-            position: relative;
-            width: 100%;
-            height: 280px;
-            background: 
-                linear-gradient(180deg, #0a0b10 0%, #0f1117 100%),
-                repeating-linear-gradient(90deg, transparent, transparent 59px, #14161e 59px, #14161e 60px),
-                repeating-linear-gradient(0deg, transparent, transparent 59px, #14161e 59px, #14161e 60px);
-            background-size: 100% 100%, 60px 60px, 60px 60px;
-            border-bottom: 1px solid var(--border);
-            overflow: hidden;
+            position:relative; width:100%; height:300px;
+            background: linear-gradient(180deg,#0a0b10,#0f1117);
+            border-bottom:1px solid var(--border); overflow:hidden;
         }
-        
+        .floor-grid {
+            position:absolute; inset:0;
+            background:
+                repeating-linear-gradient(90deg,transparent,transparent 79px,#12141b 79px,#12141b 80px),
+                repeating-linear-gradient(0deg,transparent,transparent 79px,#12141b 79px,#12141b 80px);
+            opacity:0.3;
+        }
         .floor-label {
-            position: absolute;
-            top: 10px;
-            left: 20px;
-            font-family: 'Space Mono', monospace;
-            font-size: 10px;
-            color: var(--muted);
-            letter-spacing: 2px;
-            text-transform: uppercase;
+            position:absolute; top:12px; left:16px;
+            font-family:'Space Mono',monospace; font-size:9px; color:var(--muted);
+            letter-spacing:2px; text-transform:uppercase;
         }
-        
-        /* ── Agent Characters ── */
-        .agent {
-            position: absolute;
-            width: 36px;
-            height: 48px;
-            transition: left 3s ease-in-out, top 3s ease-in-out;
+        .floor-time {
+            position:absolute; top:12px; right:16px;
+            font-family:'Space Mono',monospace; font-size:9px; color:var(--muted);
         }
-        
-        .agent-body {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            position: relative;
-            box-shadow: 0 0 20px var(--glow);
+
+        /* ── Robot Characters (SVG) ── */
+        .robot {
+            position:absolute;
+            transition: left 4s cubic-bezier(.4,0,.2,1), top 4s cubic-bezier(.4,0,.2,1);
+            cursor: pointer;
         }
-        
-        .agent-body::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 20px;
-            height: 6px;
-            background: rgba(0,0,0,0.4);
-            border-radius: 50%;
-            filter: blur(2px);
+        .robot:hover .robot-tooltip { opacity:1; transform:translateX(-50%) translateY(-8px); }
+        .robot-tooltip {
+            position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+            background:var(--card); border:1px solid var(--border); border-radius:6px;
+            padding:6px 10px; font-size:9px; font-family:'Space Mono',monospace;
+            color:var(--text); white-space:nowrap; opacity:0; transition:all .2s; pointer-events:none;
+            z-index:10;
         }
-        
-        .agent-label {
-            position: absolute;
-            top: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'Space Mono', monospace;
-            font-size: 8px;
-            color: var(--muted);
-            white-space: nowrap;
-            letter-spacing: 1px;
+        .robot-tooltip::after {
+            content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%);
+            border:4px solid transparent; border-top-color:var(--border);
         }
-        
-        .agent-thought {
-            position: absolute;
-            top: -28px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 3px 8px;
-            font-size: 9px;
-            color: var(--text);
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
+        .robot svg { filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5)); }
+        .robot-walking svg { animation: bob 0.6s ease-in-out infinite; }
+        @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+
+        /* ── Desk (top-down) ── */
+        .desk { position:absolute; }
+        .desk-top {
+            width:56px; height:32px; background:#181b24; border:1px solid #252830;
+            border-radius:3px; position:relative;
         }
-        
-        .agent:hover .agent-thought { opacity: 1; }
-        
-        .agent .legs {
-            position: absolute;
-            bottom: 6px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 6px;
+        .desk-screen {
+            position:absolute; top:4px; left:4px; right:4px; height:10px;
+            border-radius:2px; animation: screenPulse 3s ease-in-out infinite;
         }
-        
-        .agent .leg {
-            width: 4px;
-            height: 8px;
-            background: #333;
-            border-radius: 2px;
+        @keyframes screenPulse { 0%,100%{opacity:0.7} 50%{opacity:1} }
+        .desk-chair {
+            position:absolute; bottom:-10px; left:50%; transform:translateX(-50%);
+            width:12px; height:8px; background:#1e2028; border-radius:2px;
         }
-        
-        .walking .leg:nth-child(1) { animation: walkL 0.4s infinite; }
-        .walking .leg:nth-child(2) { animation: walkR 0.4s infinite; }
-        
-        @keyframes walkL { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-        @keyframes walkR { 0%, 100% { transform: translateY(-3px); } 50% { transform: translateY(0); } }
-        
-        /* ── Desks (top-down view) ── */
-        .desk-icon {
-            position: absolute;
-            width: 50px;
-            height: 30px;
-            background: #1a1d27;
-            border: 1px solid #252830;
-            border-radius: 4px;
-        }
-        
-        .desk-icon::before {
-            content: '';
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            right: 3px;
-            height: 8px;
-            background: #0d3b66;
-            border-radius: 2px;
-        }
-        
-        /* ── Price Ticker ── */
-        .ticker {
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            padding: 8px 0;
-            overflow: hidden;
-        }
-        
-        .ticker-inner {
-            display: flex;
-            gap: 40px;
-            animation: scroll 30s linear infinite;
-            width: max-content;
-        }
-        
-        @keyframes scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-        
-        .ticker-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: 'Space Mono', monospace;
-            font-size: 11px;
-            white-space: nowrap;
-        }
-        
-        .ticker-sym { color: var(--green); font-weight: 600; }
-        .ticker-price { color: var(--text); }
-        .ticker-change { font-size: 10px; }
-        .ticker-change.up { color: var(--green); }
-        .ticker-change.down { color: var(--red); }
-        .ticker-spark { width: 40px; height: 16px; }
-        
-        /* ── Main Grid ── */
-        .main {
-            display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 1px;
-            background: var(--border);
-        }
-        
-        .content { background: var(--bg); padding: 20px; }
-        .sidebar { background: var(--card); padding: 16px; }
-        
+
+        /* ── Ticker ── */
+        .ticker { background:var(--card); border-bottom:1px solid var(--border); padding:6px 0; overflow:hidden; }
+        .ticker-inner { display:flex; gap:32px; animation:scroll 40s linear infinite; width:max-content; }
+        @keyframes scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+        .ticker-item { display:flex; align-items:center; gap:6px; font-family:'Space Mono',monospace; font-size:10px; white-space:nowrap; }
+        .ticker-sym { color:var(--green); font-weight:700; }
+        .ticker-price { color:var(--text); }
+        .ticker-chg { font-size:9px; }
+        .ticker-chg.up{color:var(--green)} .ticker-chg.down{color:var(--red)}
+
+        /* ── Main ── */
+        .main { display:grid; grid-template-columns:1fr 260px; gap:1px; background:var(--border); }
+        .content { background:var(--bg); padding:16px; }
+        .sidebar { background:var(--card); padding:14px; }
+
         /* ── Agent Cards ── */
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
+        .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
         .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 14px;
-            transition: border-color 0.2s;
+            background:var(--card); border:1px solid var(--border); border-radius:8px;
+            padding:12px; transition:border-color .2s; position:relative; overflow:hidden;
         }
-        
-        .card:hover { border-color: var(--green); }
-        
-        .card-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .card-name {
-            font-family: 'Space Mono', monospace;
-            font-size: 11px;
-            color: var(--muted);
-            letter-spacing: 1px;
-        }
-        
-        .card-status {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--green);
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        
-        .card-value {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-        
-        .card-pnl {
-            font-family: 'Space Mono', monospace;
-            font-size: 11px;
-            margin-bottom: 12px;
-        }
-        
-        .up { color: var(--green); }
-        .down { color: var(--red); }
-        
-        .card-holdings {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        
-        .h-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 11px;
-        }
-        
-        .h-sym { color: var(--green); font-family: 'Space Mono', monospace; }
-        .h-val { color: var(--muted); }
-        
-        .h-bar-bg {
-            flex: 1;
-            height: 2px;
-            background: var(--border);
-            margin: 0 8px;
-            border-radius: 1px;
-        }
-        
-        .h-bar {
-            height: 100%;
-            background: var(--green);
-            border-radius: 1px;
-        }
-        
-        /* ── Sidebar: Trades ── */
-        .sidebar-title {
-            font-family: 'Space Mono', monospace;
-            font-size: 10px;
-            color: var(--muted);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-bottom: 12px;
-        }
-        
-        .trade-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        
-        .trade {
-            padding: 8px;
-            background: var(--bg);
-            border-radius: 4px;
-            font-size: 11px;
-        }
-        
-        .trade-head {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 4px;
-        }
-        
-        .trade-agent {
-            font-family: 'Space Mono', monospace;
-            font-size: 9px;
-            color: var(--muted);
-        }
-        
-        .trade-time {
-            font-size: 9px;
-            color: var(--muted);
-        }
-        
-        .trade-action {
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .trade-type { font-weight: 600; }
-        .trade-type.buy { color: var(--green); }
-        .trade-type.sell { color: var(--red); }
-        
-        /* ── Footer ── */
-        .footer {
-            text-align: center;
-            padding: 12px;
-            font-size: 10px;
-            color: var(--muted);
-            border-top: 1px solid var(--border);
-        }
+        .card:hover { border-color:var(--green); }
+        .card-accent { position:absolute; top:0; left:0; right:0; height:2px; }
+        .card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .card-name { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1px; }
+        .card-dot { width:5px; height:5px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .card-value { font-size:20px; font-weight:600; margin-bottom:2px; }
+        .card-pnl { font-family:'Space Mono',monospace; font-size:10px; margin-bottom:10px; }
+        .up{color:var(--green)} .down{color:var(--red)}
+        .card-holdings { display:flex; flex-direction:column; gap:3px; }
+        .h-row { display:flex; align-items:center; font-size:10px; }
+        .h-sym { color:var(--green); font-family:'Space Mono',monospace; width:50px; }
+        .h-bar-bg { flex:1; height:2px; background:var(--border); margin:0 6px; border-radius:1px; }
+        .h-bar { height:100%; background:var(--green); border-radius:1px; }
+        .h-val { color:var(--muted); width:55px; text-align:right; }
+
+        /* ── Sidebar ── */
+        .sb-title { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:10px; }
+        .trade-list { display:flex; flex-direction:column; gap:6px; }
+        .trade { padding:6px 8px; background:var(--bg); border-radius:4px; font-size:10px; }
+        .trade-top { display:flex; justify-content:space-between; margin-bottom:2px; }
+        .trade-agent { font-family:'Space Mono',monospace; font-size:8px; color:var(--muted); }
+        .trade-time { font-size:8px; color:var(--muted); }
+        .trade-bot { display:flex; justify-content:space-between; }
+        .trade-type { font-weight:600; }
+        .trade-type.buy{color:var(--green)} .trade-type.sell{color:var(--red)}
+
+        .footer { text-align:center; padding:10px; font-size:9px; color:var(--muted); border-top:1px solid var(--border); }
     </style>
 </head>
 <body>
-    <!-- Office Floor with animated agents -->
+    <!-- Office Floor -->
     <div class="floor">
+        <div class="floor-grid"></div>
         <div class="floor-label">Trading Floor — Live</div>
-        
+        <div class="floor-time" id="clock"></div>
+
         <!-- Desks -->
-        <div class="desk-icon" style="left:15%; top:40%"></div>
-        <div class="desk-icon" style="left:45%; top:40%"></div>
-        <div class="desk-icon" style="left:75%; top:40%"></div>
-        
-        <!-- Agents (will animate) -->
-        <div class="agent walking" id="agent-alpha" style="left:15%;top:55%">
-            <div class="agent-thought">Scanning WIF...</div>
-            <div class="agent-body" style="background:var(--green);--glow:#00e67640">🤖</div>
-            <div class="agent-label">ALPHA</div>
-            <div class="legs"><div class="leg"></div><div class="leg"></div></div>
+        <div class="desk" style="left:12%;top:35%"><div class="desk-top"><div class="desk-screen" style="background:#00e67630"></div><div class="desk-chair"></div></div></div>
+        <div class="desk" style="left:44%;top:35%"><div class="desk-top"><div class="desk-screen" style="background:#448aff30"></div><div class="desk-chair"></div></div></div>
+        <div class="desk" style="left:76%;top:35%"><div class="desk-top"><div class="desk-screen" style="background:#ff910030"></div><div class="desk-chair"></div></div></div>
+
+        <!-- ALPHA Robot -->
+        <div class="robot robot-walking" id="r-alpha" style="left:14%;top:52%">
+            <div class="robot-tooltip">ALPHA — Aggressive · Scanning WIF</div>
+            <svg width="40" height="52" viewBox="0 0 40 52" fill="none">
+                <!-- Body -->
+                <rect x="8" y="16" width="24" height="20" rx="4" fill="#1a1d27" stroke="#00e676" stroke-width="1.5"/>
+                <!-- Chest light -->
+                <circle cx="20" cy="26" r="3" fill="#00e676" opacity="0.8">
+                    <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+                </circle>
+                <!-- Head -->
+                <rect x="10" y="4" width="20" height="14" rx="3" fill="#1a1d27" stroke="#00e676" stroke-width="1.5"/>
+                <!-- Eyes -->
+                <circle cx="15" cy="10" r="2" fill="#00e676">
+                    <animate attributeName="r" values="2;0.5;2" dur="4s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="25" cy="10" r="2" fill="#00e676">
+                    <animate attributeName="r" values="2;0.5;2" dur="4s" repeatCount="indefinite"/>
+                </circle>
+                <!-- Antenna -->
+                <line x1="20" y1="4" x2="20" y2="0" stroke="#00e676" stroke-width="1"/>
+                <circle cx="20" cy="0" r="1.5" fill="#00e676">
+                    <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/>
+                </circle>
+                <!-- Arms -->
+                <rect x="2" y="20" width="6" height="12" rx="2" fill="#1a1d27" stroke="#00e676" stroke-width="1"/>
+                <rect x="32" y="20" width="6" height="12" rx="2" fill="#1a1d27" stroke="#00e676" stroke-width="1"/>
+                <!-- Legs -->
+                <rect x="12" y="36" width="6" height="10" rx="2" fill="#1a1d27" stroke="#00e676" stroke-width="1"/>
+                <rect x="22" y="36" width="6" height="10" rx="2" fill="#1a1d27" stroke="#00e676" stroke-width="1"/>
+                <!-- Feet -->
+                <rect x="10" y="44" width="10" height="4" rx="2" fill="#00e676" opacity="0.6"/>
+                <rect x="20" y="44" width="10" height="4" rx="2" fill="#00e676" opacity="0.6"/>
+                <!-- Glow -->
+                <circle cx="20" cy="26" r="12" fill="#00e676" opacity="0.08"/>
+            </svg>
         </div>
-        
-        <div class="agent walking" id="agent-beta" style="left:45%;top:55%">
-            <div class="agent-thought">Analyzing SOL...</div>
-            <div class="agent-body" style="background:var(--blue);--glow:#448aff40">🦾</div>
-            <div class="agent-label">BETA</div>
-            <div class="legs"><div class="leg"></div><div class="leg"></div></div>
+
+        <!-- BETA Robot -->
+        <div class="robot robot-walking" id="r-beta" style="left:46%;top:52%">
+            <div class="robot-tooltip">BETA — Conservative · Holding SOL</div>
+            <svg width="40" height="52" viewBox="0 0 40 52" fill="none">
+                <rect x="8" y="16" width="24" height="20" rx="4" fill="#1a1d27" stroke="#448aff" stroke-width="1.5"/>
+                <rect x="14" y="22" width="12" height="8" rx="1" fill="#448aff20" stroke="#448aff" stroke-width="0.5"/>
+                <line x1="16" y1="24" x2="24" y2="24" stroke="#448aff" stroke-width="0.5" opacity="0.5"/>
+                <line x1="16" y1="26" x2="22" y2="26" stroke="#448aff" stroke-width="0.5" opacity="0.5"/>
+                <line x1="16" y1="28" x2="20" y2="28" stroke="#448aff" stroke-width="0.5" opacity="0.5"/>
+                <rect x="10" y="4" width="20" height="14" rx="3" fill="#1a1d27" stroke="#448aff" stroke-width="1.5"/>
+                <rect x="13" y="8" width="5" height="3" rx="1" fill="#448aff"/>
+                <rect x="22" y="8" width="5" height="3" rx="1" fill="#448aff"/>
+                <line x1="20" y1="4" x2="20" y2="0" stroke="#448aff" stroke-width="1"/>
+                <circle cx="20" cy="0" r="1.5" fill="#448aff">
+                    <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+                </circle>
+                <rect x="2" y="20" width="6" height="12" rx="2" fill="#1a1d27" stroke="#448aff" stroke-width="1"/>
+                <rect x="32" y="20" width="6" height="12" rx="2" fill="#1a1d27" stroke="#448aff" stroke-width="1"/>
+                <rect x="12" y="36" width="6" height="10" rx="2" fill="#1a1d27" stroke="#448aff" stroke-width="1"/>
+                <rect x="22" y="36" width="6" height="10" rx="2" fill="#1a1d27" stroke="#448aff" stroke-width="1"/>
+                <rect x="10" y="44" width="10" height="4" rx="2" fill="#448aff" opacity="0.6"/>
+                <rect x="20" y="44" width="10" height="4" rx="2" fill="#448aff" opacity="0.6"/>
+                <circle cx="20" cy="26" r="12" fill="#448aff" opacity="0.08"/>
+            </svg>
         </div>
-        
-        <div class="agent walking" id="agent-gamma" style="left:75%;top:55%">
-            <div class="agent-thought">Checking BONK...</div>
-            <div class="agent-body" style="background:var(--orange);--glow:#ff910040">🧠</div>
-            <div class="agent-label">GAMMA</div>
-            <div class="legs"><div class="leg"></div><div class="leg"></div></div>
+
+        <!-- GAMMA Robot -->
+        <div class="robot robot-walking" id="r-gamma" style="left:78%;top:52%">
+            <div class="robot-tooltip">GAMMA — Balanced · Watching BONK</div>
+            <svg width="40" height="52" viewBox="0 0 40 52" fill="none">
+                <rect x="8" y="16" width="24" height="20" rx="4" fill="#1a1d27" stroke="#ff9100" stroke-width="1.5"/>
+                <circle cx="20" cy="26" r="5" fill="none" stroke="#ff9100" stroke-width="1"/>
+                <circle cx="20" cy="26" r="2" fill="#ff9100" opacity="0.6">
+                    <animate attributeName="r" values="2;3;2" dur="2s" repeatCount="indefinite"/>
+                </circle>
+                <rect x="10" y="4" width="20" height="14" rx="3" fill="#1a1d27" stroke="#ff9100" stroke-width="1.5"/>
+                <path d="M14 10 L18 8 L22 12 L26 10" stroke="#ff9100" stroke-width="1.5" fill="none"/>
+                <circle cx="14" cy="10" r="1" fill="#ff9100"/>
+                <circle cx="26" cy="10" r="1" fill="#ff9100"/>
+                <line x1="20" y1="4" x2="20" y2="0" stroke="#ff9100" stroke-width="1"/>
+                <circle cx="20" cy="0" r="1.5" fill="#ff9100">
+                    <animate attributeName="opacity" values="1;0.3;1" dur="1.8s" repeatCount="indefinite"/>
+                </circle>
+                <rect x="2" y="20" width="6" height="12" rx="2" fill="#1a1d27" stroke="#ff9100" stroke-width="1"/>
+                <rect x="32" y="20" width="6" height="12" rx="2" fill="#1a1d27" stroke="#ff9100" stroke-width="1"/>
+                <rect x="12" y="36" width="6" height="10" rx="2" fill="#1a1d27" stroke="#ff9100" stroke-width="1"/>
+                <rect x="22" y="36" width="6" height="10" rx="2" fill="#1a1d27" stroke="#ff9100" stroke-width="1"/>
+                <rect x="10" y="44" width="10" height="4" rx="2" fill="#ff9100" opacity="0.6"/>
+                <rect x="20" y="44" width="10" height="4" rx="2" fill="#ff9100" opacity="0.6"/>
+                <circle cx="20" cy="26" r="12" fill="#ff9100" opacity="0.08"/>
+            </svg>
         </div>
     </div>
-    
-    <!-- Price Ticker -->
-    <div class="ticker">
-        <div class="ticker-inner" id="ticker"></div>
-    </div>
-    
-    <!-- Main Content -->
+
+    <!-- Ticker -->
+    <div class="ticker"><div class="ticker-inner" id="ticker"></div></div>
+
+    <!-- Main -->
     <div class="main">
-        <div class="content">
-            <div class="cards" id="cards"></div>
-        </div>
+        <div class="content"><div class="cards" id="cards"></div></div>
         <div class="sidebar">
-            <div class="sidebar-title">Recent Trades</div>
+            <div class="sb-title">Recent Trades</div>
             <div class="trade-list" id="trades"></div>
         </div>
     </div>
-    
+
     <div class="footer">Mistral AI × DexScreener | Auto-refresh 60s</div>
-    
+
     <script>
-        // ── Agent movement ──
-        const agents = ['agent-alpha', 'agent-beta', 'agent-gamma'];
-        const thoughts = [
-            'Scanning WIF...', 'Analyzing SOL...', 'Checking BONK...',
-            'Researching PEPE...', 'Watching volume...', 'Calculating risk...',
-            'Executing trade...', 'Monitoring pumps...', 'Reading charts...',
-            'Optimizing portfolio...', 'Scanning liquidity...', 'Finding alpha...'
-        ];
-        
-        function moveAgent(id) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            const x = 10 + Math.random() * 75;
-            const y = 25 + Math.random() * 50;
-            el.style.left = x + '%';
-            el.style.top = y + '%';
-            el.querySelector('.agent-thought').textContent = thoughts[Math.floor(Math.random() * thoughts.length)];
+        // Clock
+        function updateClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false})}
+        setInterval(updateClock,1000);updateClock();
+
+        // Robot movement
+        const robots=['r-alpha','r-beta','r-gamma'];
+        const thoughts=['Scanning WIF...','Analyzing SOL...','Checking BONK...','Watching volume...','Calculating risk...','Executing trade...','Monitoring pumps...','Reading charts...','Optimizing...','Finding alpha...'];
+        function moveRobot(id){
+            const el=document.getElementById(id);if(!el)return;
+            el.style.left=(10+Math.random()*75)+'%';
+            el.style.top=(30+Math.random()*45)+'%';
+            el.querySelector('.robot-tooltip').textContent=
+                id==='r-alpha'?'ALPHA — Aggressive · '+thoughts[Math.floor(Math.random()*thoughts.length)]:
+                id==='r-beta'?'BETA — Conservative · '+thoughts[Math.floor(Math.random()*thoughts.length)]:
+                'GAMMA — Balanced · '+thoughts[Math.floor(Math.random()*thoughts.length)];
         }
-        
-        agents.forEach(id => {
-            setInterval(() => moveAgent(id), 4000 + Math.random() * 3000);
-            moveAgent(id);
-        });
-        
-        // ── Sparkline SVG ──
-        function sparkline(values, color) {
-            const w = 40, h = 16;
-            const min = Math.min(...values);
-            const max = Math.max(...values);
-            const range = max - min || 1;
-            const points = values.map((v, i) => 
-                `${(i / (values.length - 1)) * w},${h - ((v - min) / range) * h}`
-            ).join(' ');
-            return `<svg width="${w}" height="${h}" class="ticker-spark"><polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5"/></svg>`;
-        }
-        
-        // ── Price Data ──
-        const tokens = [
-            { sym: 'SOL', addr: 'So11111111111111111111111111111111111111112' },
-            { sym: 'WIF', addr: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm' },
-            { sym: 'BONK', addr: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263' },
-            { sym: 'POPCAT', addr: '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr' },
-            { sym: 'FARTCOIN', addr: '9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump' },
-            { sym: 'TRUMP', addr: '6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN' },
-        ];
-        
-        // ── Agent Data (from JSON) ──
-        const agentMeta = {
-            mistral_alpha: { emoji: '🤖', color: 'var(--green)', short: 'ALPHA' },
-            mistral_beta: { emoji: '🦾', color: 'var(--blue)', short: 'BETA' },
-            mistral_gamma: { emoji: '🧠', color: 'var(--orange)', short: 'GAMMA' }
-        };
-        
-        async function loadData() {
-            try {
-                const r = await fetch('/arena_data.json');
-                return await r.json();
-            } catch(e) { return {}; }
-        }
-        
-        async function render() {
-            const data = await loadData();
-            
-            // Cards
-            const cards = document.getElementById('cards');
-            cards.innerHTML = Object.entries(data).map(([name, d]) => {
-                const m = agentMeta[name] || { emoji: '🤖', color: 'var(--green)', short: name };
-                const total = d.total || 100000;
-                const pnl = total - 100000;
-                const cls = pnl >= 0 ? 'up' : 'down';
-                const cashPct = total > 0 ? ((d.cash || 0) / total * 100).toFixed(0) : 0;
-                
-                let holdings = '';
-                const entries = Object.entries(d.holdings || {}).sort((a,b) => (b[1].value||0) - (a[1].value||0));
-                for (const [tok, h] of entries) {
-                    const pct = total > 0 ? ((h.value||0) / total * 100).toFixed(0) : 0;
-                    holdings += `<div class="h-row"><span class="h-sym">${tok}</span><div class="h-bar-bg"><div class="h-bar" style="width:${pct}%"></div></div><span class="h-val">$${(h.value||0).toLocaleString()}</span></div>`;
-                }
-                
-                return `<div class="card">
-                    <div class="card-head">
-                        <span class="card-name">${m.emoji} ${m.short}</span>
-                        <div class="card-status"></div>
-                    </div>
-                    <div class="card-value ${cls}">$${total.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
-                    <div class="card-pnl ${cls}">${pnl>=0?'+':''}$${pnl.toFixed(2)} (${pnl>=0?'+':''}${(pnl/1000).toFixed(1)}%)</div>
-                    <div class="card-holdings">${holdings || '<div class="h-row"><span class="h-val">No positions</span></div>'}</div>
-                </div>`;
+        robots.forEach(id=>{setInterval(()=>moveRobot(id),5000+Math.random()*3000);moveRobot(id)});
+
+        // Agent data
+        const agentMeta={mistral_alpha:{color:'var(--green)',short:'ALPHA'},mistral_beta:{color:'var(--blue)',short:'BETA'},mistral_gamma:{color:'var(--orange)',short:'GAMMA'}};
+
+        async function loadData(){try{const r=await fetch('/arena_data.json');return await r.json()}catch(e){return{}}}
+
+        async function render(){
+            const data=await loadData();
+            const cards=document.getElementById('cards');
+            cards.innerHTML=Object.entries(data).map(([name,d])=>{
+                const m=agentMeta[name]||{color:'var(--green)',short:name};
+                const total=d.total||100000;const pnl=total-100000;const cls=pnl>=0?'up':'down';
+                let h='';const entries=Object.entries(d.holdings||{}).sort((a,b)=>(b[1].value||0)-(a[1].value||0));
+                for(const[tok,v]of entries){const pct=total>0?((v.value||0)/total*100).toFixed(0):0;
+                    h+=`<div class="h-row"><span class="h-sym">${tok}</span><div class="h-bar-bg"><div class="h-bar" style="width:${pct}%"></div></div><span class="h-val">$${(v.value||0).toLocaleString()}</span></div>`;}
+                return`<div class="card"><div class="card-accent" style="background:${m.color}"></div><div class="card-head"><span class="card-name" style="color:${m.color}">${m.short}</span><div class="card-dot"></div></div><div class="card-value ${cls}">$${total.toLocaleString(undefined,{minimumFractionDigits:2})}</div><div class="card-pnl ${cls}">${pnl>=0?'+':''}$${pnl.toFixed(2)} (${pnl>=0?'+':''}${(pnl/1000).toFixed(1)}%)</div><div class="card-holdings">${h||'<div class="h-row"><span class="h-val" style="color:var(--muted)">No positions</span></div>'}</div></div>`;
             }).join('');
-            
-            // Trades (from portfolio snapshots)
-            const trades = document.getElementById('trades');
-            const allTrades = [];
-            for (const [name, d] of Object.entries(data)) {
-                const m = agentMeta[name] || { short: name };
-                for (const [tok, h] of Object.entries(d.holdings || {})) {
-                    if (h.value > 0) {
-                        allTrades.push({
-                            agent: m.short,
-                            token: tok,
-                            value: h.value,
-                            action: 'buy'
-                        });
-                    }
-                }
-            }
-            allTrades.sort((a,b) => b.value - a.value);
-            
-            trades.innerHTML = allTrades.slice(0, 8).map(t => `
-                <div class="trade">
-                    <div class="trade-head">
-                        <span class="trade-agent">${t.agent}</span>
-                        <span class="trade-time">just now</span>
-                    </div>
-                    <div class="trade-action">
-                        <span class="trade-type buy">BUY</span>
-                        <span>${t.token} · $${t.value.toLocaleString()}</span>
-                    </div>
-                </div>
-            `).join('') || '<div style="color:var(--muted);font-size:11px">No trades yet</div>';
+
+            // Trades
+            const trades=document.getElementById('trades');
+            const all=[];for(const[name,d]of Object.entries(data)){const m=agentMeta[name]||{short:name};
+                for(const[tok,h]of Object.entries(d.holdings||{})){if(h.value>0)all.push({agent:m.short,token:tok,value:h.value});}}
+            all.sort((a,b)=>b.value-a.value);
+            trades.innerHTML=all.slice(0,8).map(t=>`<div class="trade"><div class="trade-top"><span class="trade-agent">${t.agent}</span><span class="trade-time">now</span></div><div class="trade-bot"><span class="trade-type buy">BUY</span><span>${t.token} · $${t.value.toLocaleString()}</span></div></div>`).join('')||'<div style="color:var(--muted);font-size:10px">No trades yet</div>';
         }
-        
         render();
     </script>
 </body>
