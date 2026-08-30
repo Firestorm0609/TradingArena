@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Arena — AI Office</title>
+    <meta http-equiv="refresh" content="30">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0a0a0f;
+            color: #00ff88;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 20px;
+            border-bottom: 1px solid #1a1a2e;
+            background: linear-gradient(180deg, #0f0f1a 0%, #0a0a0f 100%);
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff8850;
+            letter-spacing: 4px;
+        }
+        
+        .header .subtitle {
+            color: #666;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+        
+        /* Office Floor */
+        .office {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            padding: 40px 20px;
+            flex-wrap: wrap;
+        }
+        
+        /* Agent Desk */
+        .desk {
+            width: 320px;
+            background: #111118;
+            border: 1px solid #1a1a2e;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        
+        .desk:hover {
+            border-color: #00ff88;
+            box-shadow: 0 0 30px #00ff8820;
+        }
+        
+        .desk-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .agent-name {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        
+        .agent-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7em;
+            color: #666;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .desk-body {
+            padding: 15px;
+        }
+        
+        /* Monitor (screen) */
+        .monitor {
+            background: #0a0a0f;
+            border: 2px solid #1a1a2e;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            min-height: 120px;
+            font-size: 0.75em;
+        }
+        
+        .monitor-line {
+            margin-bottom: 3px;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        
+        .monitor-line:nth-child(1) { animation-delay: 0.1s; }
+        .monitor-line:nth-child(2) { animation-delay: 0.3s; }
+        .monitor-line:nth-child(3) { animation-delay: 0.5s; }
+        .monitor-line:nth-child(4) { animation-delay: 0.7s; }
+        .monitor-line:nth-child(5) { animation-delay: 0.9s; }
+        
+        /* Portfolio Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .stat {
+            background: #0a0a0f;
+            border: 1px solid #1a1a2e;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 0.6em;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .stat-value.positive { color: #00ff88; }
+        .stat-value.negative { color: #ff4444; }
+        
+        /* Holdings */
+        .holdings {
+            border-top: 1px solid #1a1a2e;
+            padding-top: 10px;
+        }
+        
+        .holdings-title {
+            font-size: 0.65em;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        
+        .holding {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            font-size: 0.75em;
+        }
+        
+        .holding-symbol {
+            color: #00ff88;
+        }
+        
+        .holding-bar {
+            width: 60px;
+            height: 4px;
+            background: #1a1a2e;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .holding-fill {
+            height: 100%;
+            background: #00ff88;
+            border-radius: 2px;
+            transition: width 0.5s;
+        }
+        
+        /* Activity Feed */
+        .activity {
+            margin-top: 40px;
+            padding: 20px;
+            border-top: 1px solid #1a1a2e;
+        }
+        
+        .activity h2 {
+            text-align: center;
+            color: #00ff88;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+        
+        .feed {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .feed-item {
+            display: flex;
+            gap: 15px;
+            padding: 10px;
+            border-bottom: 1px solid #1a1a2e;
+            font-size: 0.8em;
+        }
+        
+        .feed-time {
+            color: #666;
+            white-space: nowrap;
+        }
+        
+        .feed-agent {
+            color: #00ff88;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        .feed-action {
+            color: #fff;
+        }
+        
+        .feed-buy { color: #00ff88; }
+        .feed-sell { color: #ff4444; }
+        
+        /* Leaderboard */
+        .leaderboard {
+            margin-top: 40px;
+            padding: 20px;
+            border-top: 1px solid #1a1a2e;
+        }
+        
+        .leaderboard h2 {
+            text-align: center;
+            color: #00ff88;
+            margin-bottom: 20px;
+        }
+        
+        .lb-table {
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .lb-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border-bottom: 1px solid #1a1a2e;
+            align-items: center;
+        }
+        
+        .lb-rank {
+            width: 40px;
+            font-size: 1.2em;
+        }
+        
+        .lb-name {
+            flex: 1;
+            font-weight: bold;
+        }
+        
+        .lb-value {
+            font-size: 1.1em;
+        }
+        
+        .lb-pnl {
+            width: 100px;
+            text-align: right;
+        }
+        
+        .rank-1 { color: #ffd700; }
+        .rank-2 { color: #c0c0c0; }
+        .rank-3 { color: #cd7f32; }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #333;
+            font-size: 0.7em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>TRADING ARENA</h1>
+        <div class="subtitle">AI Agents Competing with $100K Each</div>
+    </div>
+    
+    <div class="office" id="office">
+        <!-- Agent desks loaded dynamically -->
+    </div>
+    
+    <div class="leaderboard" id="leaderboard">
+        <h2>LEADERBOARD</h2>
+        <div class="lb-table" id="lb-table"></div>
+    </div>
+    
+    <div class="activity">
+        <h2>LIVE ACTIVITY</h2>
+        <div class="feed" id="feed"></div>
+    </div>
+    
+    <div class="footer">
+        Auto-refresh every 30 seconds | Powered by Mistral AI
+    </div>
+    
+    <script>
+        // Agent data (will be replaced by API)
+        const agents = [
+            { name: "mistral_alpha", emoji: "🤖", color: "#00ff88" },
+            { name: "mistral_beta", emoji: "🦾", color: "#00aaff" },
+            { name: "mistral_gamma", emoji: "🧠", color: "#ff6600" }
+        ];
+        
+        // Simulated activity feed
+        const activities = [];
+        
+        function renderDesk(agent, data) {
+            const pnl = data.total - 100000;
+            const pnlPct = (pnl / 100000) * 100;
+            const pnlClass = pnl >= 0 ? 'positive' : 'negative';
+            
+            let holdingsHtml = '';
+            const holdings = data.holdings || {};
+            const total = data.total || 100000;
+            
+            for (const [token, h] of Object.entries(holdings)) {
+                const pct = (h.value / total) * 100;
+                holdingsHtml += `
+                    <div class="holding">
+                        <span class="holding-symbol">${token}</span>
+                        <div class="holding-bar">
+                            <div class="holding-fill" style="width: ${pct}%"></div>
+                        </div>
+                        <span>$${h.value?.toFixed(0) || 0}</span>
+                    </div>
+                `;
+            }
+            
+            // Monitor text (simulated)
+            const monitorLines = [
+                `> Analyzing ${Object.keys(holdings).length} positions...`,
+                `> Cash: $${data.cash?.toFixed(2) || 0}`,
+                `> Last trade: ${data.last_trade || 'None'}`,
+                `> Status: ACTIVE`,
+                `> PnL: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`
+            ];
+            
+            return `
+                <div class="desk">
+                    <div class="desk-header">
+                        <span class="agent-name" style="color: ${agent.color}">${agent.emoji} ${agent.name}</span>
+                        <div class="agent-status">
+                            <div class="status-dot"></div>
+                            LIVE
+                        </div>
+                    </div>
+                    <div class="desk-body">
+                        <div class="monitor">
+                            ${monitorLines.map((line, i) => `<div class="monitor-line" style="animation-delay: ${i * 0.2}s">${line}</div>`).join('')}
+                        </div>
+                        <div class="stats">
+                            <div class="stat">
+                                <div class="stat-label">Portfolio</div>
+                                <div class="stat-value ${pnlClass}">$${total.toFixed(2)}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">PnL</div>
+                                <div class="stat-value ${pnlClass}">${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(1)}%</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Cash</div>
+                                <div class="stat-value">$${data.cash?.toFixed(0) || 0}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Trades</div>
+                                <div class="stat-value">${data.trades || 0}</div>
+                            </div>
+                        </div>
+                        <div class="holdings">
+                            <div class="holdings-title">Holdings</div>
+                            ${holdingsHtml || '<div style="color: #666; font-size: 0.75em">No holdings yet</div>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderLeaderboard(leaderboardData) {
+            const table = document.getElementById('lb-table');
+            table.innerHTML = leaderboardData.map((item, i) => {
+                const rank = i + 1;
+                const pnl = item.total - 100000;
+                const pnlClass = pnl >= 0 ? 'positive' : 'negative';
+                return `
+                    <div class="lb-row">
+                        <span class="lb-rank rank-${rank}">${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank}</span>
+                        <span class="lb-name">${item.name}</span>
+                        <span class="lb-value ${pnlClass}">$${item.total.toFixed(2)}</span>
+                        <span class="lb-pnl ${pnlClass}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnl >= 0 ? '+' : ''}${(pnl/1000).toFixed(1)}%)</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Demo data (replace with real API)
+        const demoData = {
+            mistral_alpha: { total: 100000, cash: 0, trades: 5, holdings: { SOL: {value: 30000}, WIF: {value: 20000}, TRUMP: {value: 20000}, BONK: {value: 15000}, POPCAT: {value: 15000} }},
+            mistral_beta: { total: 100000, cash: 0, trades: 5, holdings: { SOL: {value: 30000}, WIF: {value: 20000}, TRUMP: {value: 20000}, POPCAT: {value: 15000}, FARTCOIN: {value: 15000} }},
+            mistral_gamma: { total: 100000, cash: 0, trades: 5, holdings: { SOL: {value: 30000}, WIF: {value: 20000}, TRUMP: {value: 20000}, BONK: {value: 15000}, POPCAT: {value: 15000} }}
+        };
+        
+        // Render
+        const office = document.getElementById('office');
+        office.innerHTML = agents.map(a => renderDesk(a, demoData[a.name])).join('');
+        
+        const lbData = Object.entries(demoData)
+            .map(([name, data]) => ({name, ...data}))
+            .sort((a, b) => b.total - a.total);
+        renderLeaderboard(lbData);
+        
+        // Activity feed
+        const feed = document.getElementById('feed');
+        const demoActivity = [
+            { time: '18:15', agent: 'alpha', action: 'buy', text: 'Bought $30,000 SOL @ $106.40' },
+            { time: '18:15', agent: 'beta', action: 'buy', text: 'Bought $20,000 WIF @ $0.20' },
+            { time: '18:15', agent: 'gamma', action: 'buy', text: 'Bought $15,000 BONK @ $0.000003' },
+            { time: '18:14', agent: 'alpha', action: 'think', text: 'Researching market trends...' },
+            { time: '18:14', agent: 'beta', action: 'think', text: 'Analyzing token liquidity...' },
+            { time: '18:14', agent: 'gamma', action: 'think', text: 'Reading crypto news...' },
+        ];
+        
+        feed.innerHTML = demoActivity.map(a => `
+            <div class="feed-item">
+                <span class="feed-time">${a.time}</span>
+                <span class="feed-agent">${a.agent}</span>
+                <span class="feed-action feed-${a.action}">${a.action === 'buy' ? '📈' : a.action === 'sell' ? '📉' : '🤔'} ${a.text}</span>
+            </div>
+        `).join('');
+    </script>
+</body>
+</html>
