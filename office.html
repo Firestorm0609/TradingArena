@@ -3,462 +3,532 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Arena — AI Office</title>
-    <meta http-equiv="refresh" content="30">
+    <title>Trading Arena</title>
+    <meta http-equiv="refresh" content="60">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap');
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
+        :root {
+            --bg: #08090d;
+            --card: #0f1117;
+            --border: #1a1d27;
+            --green: #00e676;
+            --red: #ff5252;
+            --blue: #448aff;
+            --orange: #ff9100;
+            --text: #e0e0e0;
+            --muted: #555;
+        }
+        
         body {
-            font-family: 'JetBrains Mono', monospace;
-            background: #0a0a0f;
-            color: #00ff88;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            overflow-x: hidden;
         }
         
-        /* Header */
-        .header {
-            text-align: center;
-            padding: 20px;
-            border-bottom: 1px solid #1a1a2e;
-            background: linear-gradient(180deg, #0f0f1a 0%, #0a0a0f 100%);
-        }
-        
-        .header h1 {
-            font-size: 2em;
-            color: #00ff88;
-            text-shadow: 0 0 20px #00ff8850;
-            letter-spacing: 4px;
-        }
-        
-        .header .subtitle {
-            color: #666;
-            font-size: 0.8em;
-            margin-top: 5px;
-        }
-        
-        /* Office Floor */
-        .office {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            padding: 40px 20px;
-            flex-wrap: wrap;
-        }
-        
-        /* Agent Desk */
-        .desk {
-            width: 320px;
-            background: #111118;
-            border: 1px solid #1a1a2e;
-            border-radius: 12px;
+        /* ── Floor ── */
+        .floor {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            background: 
+                linear-gradient(180deg, #0a0b10 0%, #0f1117 100%),
+                repeating-linear-gradient(90deg, transparent, transparent 59px, #14161e 59px, #14161e 60px),
+                repeating-linear-gradient(0deg, transparent, transparent 59px, #14161e 59px, #14161e 60px);
+            background-size: 100% 100%, 60px 60px, 60px 60px;
+            border-bottom: 1px solid var(--border);
             overflow: hidden;
-            transition: all 0.3s;
         }
         
-        .desk:hover {
-            border-color: #00ff88;
-            box-shadow: 0 0 30px #00ff8820;
+        .floor-label {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
         
-        .desk-header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
-            padding: 15px;
+        /* ── Agent Characters ── */
+        .agent {
+            position: absolute;
+            width: 36px;
+            height: 48px;
+            transition: left 3s ease-in-out, top 3s ease-in-out;
+        }
+        
+        .agent-body {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            position: relative;
+            box-shadow: 0 0 20px var(--glow);
+        }
+        
+        .agent-body::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 6px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 50%;
+            filter: blur(2px);
+        }
+        
+        .agent-label {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Space Mono', monospace;
+            font-size: 8px;
+            color: var(--muted);
+            white-space: nowrap;
+            letter-spacing: 1px;
+        }
+        
+        .agent-thought {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 3px 8px;
+            font-size: 9px;
+            color: var(--text);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .agent:hover .agent-thought { opacity: 1; }
+        
+        .agent .legs {
+            position: absolute;
+            bottom: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+        }
+        
+        .agent .leg {
+            width: 4px;
+            height: 8px;
+            background: #333;
+            border-radius: 2px;
+        }
+        
+        .walking .leg:nth-child(1) { animation: walkL 0.4s infinite; }
+        .walking .leg:nth-child(2) { animation: walkR 0.4s infinite; }
+        
+        @keyframes walkL { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+        @keyframes walkR { 0%, 100% { transform: translateY(-3px); } 50% { transform: translateY(0); } }
+        
+        /* ── Desks (top-down view) ── */
+        .desk-icon {
+            position: absolute;
+            width: 50px;
+            height: 30px;
+            background: #1a1d27;
+            border: 1px solid #252830;
+            border-radius: 4px;
+        }
+        
+        .desk-icon::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            right: 3px;
+            height: 8px;
+            background: #0d3b66;
+            border-radius: 2px;
+        }
+        
+        /* ── Price Ticker ── */
+        .ticker {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 8px 0;
+            overflow: hidden;
+        }
+        
+        .ticker-inner {
+            display: flex;
+            gap: 40px;
+            animation: scroll 30s linear infinite;
+            width: max-content;
+        }
+        
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+        
+        .ticker-sym { color: var(--green); font-weight: 600; }
+        .ticker-price { color: var(--text); }
+        .ticker-change { font-size: 10px; }
+        .ticker-change.up { color: var(--green); }
+        .ticker-change.down { color: var(--red); }
+        .ticker-spark { width: 40px; height: 16px; }
+        
+        /* ── Main Grid ── */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 1px;
+            background: var(--border);
+        }
+        
+        .content { background: var(--bg); padding: 20px; }
+        .sidebar { background: var(--card); padding: 16px; }
+        
+        /* ── Agent Cards ── */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        .card:hover { border-color: var(--green); }
+        
+        .card-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 10px;
         }
         
-        .agent-name {
-            font-size: 1.1em;
-            font-weight: bold;
+        .card-name {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1px;
         }
         
-        .agent-status {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.7em;
-            color: #666;
-        }
-        
-        .status-dot {
-            width: 8px;
-            height: 8px;
+        .card-status {
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
-            background: #00ff88;
+            background: var(--green);
             animation: pulse 2s infinite;
         }
         
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        
+        .card-value {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 4px;
         }
         
-        .desk-body {
-            padding: 15px;
+        .card-pnl {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            margin-bottom: 12px;
         }
         
-        /* Monitor (screen) */
-        .monitor {
-            background: #0a0a0f;
-            border: 2px solid #1a1a2e;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 15px;
-            min-height: 120px;
-            font-size: 0.75em;
+        .up { color: var(--green); }
+        .down { color: var(--red); }
+        
+        .card-holdings {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
         
-        .monitor-line {
-            margin-bottom: 3px;
-            opacity: 0;
-            animation: fadeIn 0.5s forwards;
-        }
-        
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-        
-        .monitor-line:nth-child(1) { animation-delay: 0.1s; }
-        .monitor-line:nth-child(2) { animation-delay: 0.3s; }
-        .monitor-line:nth-child(3) { animation-delay: 0.5s; }
-        .monitor-line:nth-child(4) { animation-delay: 0.7s; }
-        .monitor-line:nth-child(5) { animation-delay: 0.9s; }
-        
-        /* Portfolio Stats */
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .stat {
-            background: #0a0a0f;
-            border: 1px solid #1a1a2e;
-            border-radius: 6px;
-            padding: 10px;
-            text-align: center;
-        }
-        
-        .stat-label {
-            font-size: 0.6em;
-            color: #666;
-            text-transform: uppercase;
-        }
-        
-        .stat-value {
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-        
-        .stat-value.positive { color: #00ff88; }
-        .stat-value.negative { color: #ff4444; }
-        
-        /* Holdings */
-        .holdings {
-            border-top: 1px solid #1a1a2e;
-            padding-top: 10px;
-        }
-        
-        .holdings-title {
-            font-size: 0.65em;
-            color: #666;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-        
-        .holding {
+        .h-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 4px 0;
-            font-size: 0.75em;
+            font-size: 11px;
         }
         
-        .holding-symbol {
-            color: #00ff88;
-        }
+        .h-sym { color: var(--green); font-family: 'Space Mono', monospace; }
+        .h-val { color: var(--muted); }
         
-        .holding-bar {
-            width: 60px;
-            height: 4px;
-            background: #1a1a2e;
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        
-        .holding-fill {
-            height: 100%;
-            background: #00ff88;
-            border-radius: 2px;
-            transition: width 0.5s;
-        }
-        
-        /* Activity Feed */
-        .activity {
-            margin-top: 40px;
-            padding: 20px;
-            border-top: 1px solid #1a1a2e;
-        }
-        
-        .activity h2 {
-            text-align: center;
-            color: #00ff88;
-            margin-bottom: 20px;
-            font-size: 1.2em;
-        }
-        
-        .feed {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .feed-item {
-            display: flex;
-            gap: 15px;
-            padding: 10px;
-            border-bottom: 1px solid #1a1a2e;
-            font-size: 0.8em;
-        }
-        
-        .feed-time {
-            color: #666;
-            white-space: nowrap;
-        }
-        
-        .feed-agent {
-            color: #00ff88;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-        
-        .feed-action {
-            color: #fff;
-        }
-        
-        .feed-buy { color: #00ff88; }
-        .feed-sell { color: #ff4444; }
-        
-        /* Leaderboard */
-        .leaderboard {
-            margin-top: 40px;
-            padding: 20px;
-            border-top: 1px solid #1a1a2e;
-        }
-        
-        .leaderboard h2 {
-            text-align: center;
-            color: #00ff88;
-            margin-bottom: 20px;
-        }
-        
-        .lb-table {
-            max-width: 600px;
-            margin: 0 auto;
-            width: 100%;
-        }
-        
-        .lb-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 20px;
-            border-bottom: 1px solid #1a1a2e;
-            align-items: center;
-        }
-        
-        .lb-rank {
-            width: 40px;
-            font-size: 1.2em;
-        }
-        
-        .lb-name {
+        .h-bar-bg {
             flex: 1;
-            font-weight: bold;
+            height: 2px;
+            background: var(--border);
+            margin: 0 8px;
+            border-radius: 1px;
         }
         
-        .lb-value {
-            font-size: 1.1em;
+        .h-bar {
+            height: 100%;
+            background: var(--green);
+            border-radius: 1px;
         }
         
-        .lb-pnl {
-            width: 100px;
-            text-align: right;
+        /* ── Sidebar: Trades ── */
+        .sidebar-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
         }
         
-        .rank-1 { color: #ffd700; }
-        .rank-2 { color: #c0c0c0; }
-        .rank-3 { color: #cd7f32; }
+        .trade-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
         
-        /* Footer */
+        .trade {
+            padding: 8px;
+            background: var(--bg);
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        
+        .trade-head {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        
+        .trade-agent {
+            font-family: 'Space Mono', monospace;
+            font-size: 9px;
+            color: var(--muted);
+        }
+        
+        .trade-time {
+            font-size: 9px;
+            color: var(--muted);
+        }
+        
+        .trade-action {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .trade-type { font-weight: 600; }
+        .trade-type.buy { color: var(--green); }
+        .trade-type.sell { color: var(--red); }
+        
+        /* ── Footer ── */
         .footer {
             text-align: center;
-            padding: 20px;
-            color: #333;
-            font-size: 0.7em;
+            padding: 12px;
+            font-size: 10px;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>TRADING ARENA</h1>
-        <div class="subtitle">AI Agents Competing with $100K Each</div>
+    <!-- Office Floor with animated agents -->
+    <div class="floor">
+        <div class="floor-label">Trading Floor — Live</div>
+        
+        <!-- Desks -->
+        <div class="desk-icon" style="left:15%; top:40%"></div>
+        <div class="desk-icon" style="left:45%; top:40%"></div>
+        <div class="desk-icon" style="left:75%; top:40%"></div>
+        
+        <!-- Agents (will animate) -->
+        <div class="agent walking" id="agent-alpha" style="left:15%;top:55%">
+            <div class="agent-thought">Scanning WIF...</div>
+            <div class="agent-body" style="background:var(--green);--glow:#00e67640">🤖</div>
+            <div class="agent-label">ALPHA</div>
+            <div class="legs"><div class="leg"></div><div class="leg"></div></div>
+        </div>
+        
+        <div class="agent walking" id="agent-beta" style="left:45%;top:55%">
+            <div class="agent-thought">Analyzing SOL...</div>
+            <div class="agent-body" style="background:var(--blue);--glow:#448aff40">🦾</div>
+            <div class="agent-label">BETA</div>
+            <div class="legs"><div class="leg"></div><div class="leg"></div></div>
+        </div>
+        
+        <div class="agent walking" id="agent-gamma" style="left:75%;top:55%">
+            <div class="agent-thought">Checking BONK...</div>
+            <div class="agent-body" style="background:var(--orange);--glow:#ff910040">🧠</div>
+            <div class="agent-label">GAMMA</div>
+            <div class="legs"><div class="leg"></div><div class="leg"></div></div>
+        </div>
     </div>
     
-    <div class="office" id="office">
-        <!-- Agent desks loaded dynamically -->
+    <!-- Price Ticker -->
+    <div class="ticker">
+        <div class="ticker-inner" id="ticker"></div>
     </div>
     
-    <div class="leaderboard" id="leaderboard">
-        <h2>LEADERBOARD</h2>
-        <div class="lb-table" id="lb-table"></div>
+    <!-- Main Content -->
+    <div class="main">
+        <div class="content">
+            <div class="cards" id="cards"></div>
+        </div>
+        <div class="sidebar">
+            <div class="sidebar-title">Recent Trades</div>
+            <div class="trade-list" id="trades"></div>
+        </div>
     </div>
     
-    <div class="activity">
-        <h2>LIVE ACTIVITY</h2>
-        <div class="feed" id="feed"></div>
-    </div>
-    
-    <div class="footer">
-        Auto-refresh every 30 seconds | Powered by Mistral AI
-    </div>
+    <div class="footer">Mistral AI × DexScreener | Auto-refresh 60s</div>
     
     <script>
-        // Agent data (will be replaced by API)
-        const agents = [
-            { name: "mistral_alpha", emoji: "🤖", color: "#00ff88" },
-            { name: "mistral_beta", emoji: "🦾", color: "#00aaff" },
-            { name: "mistral_gamma", emoji: "🧠", color: "#ff6600" }
+        // ── Agent movement ──
+        const agents = ['agent-alpha', 'agent-beta', 'agent-gamma'];
+        const thoughts = [
+            'Scanning WIF...', 'Analyzing SOL...', 'Checking BONK...',
+            'Researching PEPE...', 'Watching volume...', 'Calculating risk...',
+            'Executing trade...', 'Monitoring pumps...', 'Reading charts...',
+            'Optimizing portfolio...', 'Scanning liquidity...', 'Finding alpha...'
         ];
         
-        // Simulated activity feed
-        const activities = [];
-        
-        function renderDesk(agent, data) {
-            const pnl = data.total - 100000;
-            const pnlPct = (pnl / 100000) * 100;
-            const pnlClass = pnl >= 0 ? 'positive' : 'negative';
-            
-            let holdingsHtml = '';
-            const holdings = data.holdings || {};
-            const total = data.total || 100000;
-            
-            for (const [token, h] of Object.entries(holdings)) {
-                const pct = (h.value / total) * 100;
-                holdingsHtml += `
-                    <div class="holding">
-                        <span class="holding-symbol">${token}</span>
-                        <div class="holding-bar">
-                            <div class="holding-fill" style="width: ${pct}%"></div>
-                        </div>
-                        <span>$${h.value?.toFixed(0) || 0}</span>
-                    </div>
-                `;
-            }
-            
-            // Monitor text (simulated)
-            const monitorLines = [
-                `> Analyzing ${Object.keys(holdings).length} positions...`,
-                `> Cash: $${data.cash?.toFixed(2) || 0}`,
-                `> Last trade: ${data.last_trade || 'None'}`,
-                `> Status: ACTIVE`,
-                `> PnL: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`
-            ];
-            
-            return `
-                <div class="desk">
-                    <div class="desk-header">
-                        <span class="agent-name" style="color: ${agent.color}">${agent.emoji} ${agent.name}</span>
-                        <div class="agent-status">
-                            <div class="status-dot"></div>
-                            LIVE
-                        </div>
-                    </div>
-                    <div class="desk-body">
-                        <div class="monitor">
-                            ${monitorLines.map((line, i) => `<div class="monitor-line" style="animation-delay: ${i * 0.2}s">${line}</div>`).join('')}
-                        </div>
-                        <div class="stats">
-                            <div class="stat">
-                                <div class="stat-label">Portfolio</div>
-                                <div class="stat-value ${pnlClass}">$${total.toFixed(2)}</div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-label">PnL</div>
-                                <div class="stat-value ${pnlClass}">${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(1)}%</div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-label">Cash</div>
-                                <div class="stat-value">$${data.cash?.toFixed(0) || 0}</div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-label">Trades</div>
-                                <div class="stat-value">${data.trades || 0}</div>
-                            </div>
-                        </div>
-                        <div class="holdings">
-                            <div class="holdings-title">Holdings</div>
-                            ${holdingsHtml || '<div style="color: #666; font-size: 0.75em">No holdings yet</div>'}
-                        </div>
-                    </div>
-                </div>
-            `;
+        function moveAgent(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const x = 10 + Math.random() * 75;
+            const y = 25 + Math.random() * 50;
+            el.style.left = x + '%';
+            el.style.top = y + '%';
+            el.querySelector('.agent-thought').textContent = thoughts[Math.floor(Math.random() * thoughts.length)];
         }
         
-        function renderLeaderboard(leaderboardData) {
-            const table = document.getElementById('lb-table');
-            table.innerHTML = leaderboardData.map((item, i) => {
-                const rank = i + 1;
-                const pnl = item.total - 100000;
-                const pnlClass = pnl >= 0 ? 'positive' : 'negative';
-                return `
-                    <div class="lb-row">
-                        <span class="lb-rank rank-${rank}">${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank}</span>
-                        <span class="lb-name">${item.name}</span>
-                        <span class="lb-value ${pnlClass}">$${item.total.toFixed(2)}</span>
-                        <span class="lb-pnl ${pnlClass}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnl >= 0 ? '+' : ''}${(pnl/1000).toFixed(1)}%)</span>
-                    </div>
-                `;
-            }).join('');
+        agents.forEach(id => {
+            setInterval(() => moveAgent(id), 4000 + Math.random() * 3000);
+            moveAgent(id);
+        });
+        
+        // ── Sparkline SVG ──
+        function sparkline(values, color) {
+            const w = 40, h = 16;
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const range = max - min || 1;
+            const points = values.map((v, i) => 
+                `${(i / (values.length - 1)) * w},${h - ((v - min) / range) * h}`
+            ).join(' ');
+            return `<svg width="${w}" height="${h}" class="ticker-spark"><polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5"/></svg>`;
         }
         
-        // Demo data (replace with real API)
-        const demoData = {
-            mistral_alpha: { total: 100000, cash: 0, trades: 5, holdings: { SOL: {value: 30000}, WIF: {value: 20000}, TRUMP: {value: 20000}, BONK: {value: 15000}, POPCAT: {value: 15000} }},
-            mistral_beta: { total: 100000, cash: 0, trades: 5, holdings: { SOL: {value: 30000}, WIF: {value: 20000}, TRUMP: {value: 20000}, POPCAT: {value: 15000}, FARTCOIN: {value: 15000} }},
-            mistral_gamma: { total: 100000, cash: 0, trades: 5, holdings: { SOL: {value: 30000}, WIF: {value: 20000}, TRUMP: {value: 20000}, BONK: {value: 15000}, POPCAT: {value: 15000} }}
+        // ── Price Data ──
+        const tokens = [
+            { sym: 'SOL', addr: 'So11111111111111111111111111111111111111112' },
+            { sym: 'WIF', addr: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm' },
+            { sym: 'BONK', addr: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263' },
+            { sym: 'POPCAT', addr: '7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr' },
+            { sym: 'FARTCOIN', addr: '9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump' },
+            { sym: 'TRUMP', addr: '6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN' },
+        ];
+        
+        // ── Agent Data (from JSON) ──
+        const agentMeta = {
+            mistral_alpha: { emoji: '🤖', color: 'var(--green)', short: 'ALPHA' },
+            mistral_beta: { emoji: '🦾', color: 'var(--blue)', short: 'BETA' },
+            mistral_gamma: { emoji: '🧠', color: 'var(--orange)', short: 'GAMMA' }
         };
         
-        // Render
-        const office = document.getElementById('office');
-        office.innerHTML = agents.map(a => renderDesk(a, demoData[a.name])).join('');
+        async function loadData() {
+            try {
+                const r = await fetch('/arena_data.json');
+                return await r.json();
+            } catch(e) { return {}; }
+        }
         
-        const lbData = Object.entries(demoData)
-            .map(([name, data]) => ({name, ...data}))
-            .sort((a, b) => b.total - a.total);
-        renderLeaderboard(lbData);
+        async function render() {
+            const data = await loadData();
+            
+            // Cards
+            const cards = document.getElementById('cards');
+            cards.innerHTML = Object.entries(data).map(([name, d]) => {
+                const m = agentMeta[name] || { emoji: '🤖', color: 'var(--green)', short: name };
+                const total = d.total || 100000;
+                const pnl = total - 100000;
+                const cls = pnl >= 0 ? 'up' : 'down';
+                const cashPct = total > 0 ? ((d.cash || 0) / total * 100).toFixed(0) : 0;
+                
+                let holdings = '';
+                const entries = Object.entries(d.holdings || {}).sort((a,b) => (b[1].value||0) - (a[1].value||0));
+                for (const [tok, h] of entries) {
+                    const pct = total > 0 ? ((h.value||0) / total * 100).toFixed(0) : 0;
+                    holdings += `<div class="h-row"><span class="h-sym">${tok}</span><div class="h-bar-bg"><div class="h-bar" style="width:${pct}%"></div></div><span class="h-val">$${(h.value||0).toLocaleString()}</span></div>`;
+                }
+                
+                return `<div class="card">
+                    <div class="card-head">
+                        <span class="card-name">${m.emoji} ${m.short}</span>
+                        <div class="card-status"></div>
+                    </div>
+                    <div class="card-value ${cls}">$${total.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
+                    <div class="card-pnl ${cls}">${pnl>=0?'+':''}$${pnl.toFixed(2)} (${pnl>=0?'+':''}${(pnl/1000).toFixed(1)}%)</div>
+                    <div class="card-holdings">${holdings || '<div class="h-row"><span class="h-val">No positions</span></div>'}</div>
+                </div>`;
+            }).join('');
+            
+            // Trades (from portfolio snapshots)
+            const trades = document.getElementById('trades');
+            const allTrades = [];
+            for (const [name, d] of Object.entries(data)) {
+                const m = agentMeta[name] || { short: name };
+                for (const [tok, h] of Object.entries(d.holdings || {})) {
+                    if (h.value > 0) {
+                        allTrades.push({
+                            agent: m.short,
+                            token: tok,
+                            value: h.value,
+                            action: 'buy'
+                        });
+                    }
+                }
+            }
+            allTrades.sort((a,b) => b.value - a.value);
+            
+            trades.innerHTML = allTrades.slice(0, 8).map(t => `
+                <div class="trade">
+                    <div class="trade-head">
+                        <span class="trade-agent">${t.agent}</span>
+                        <span class="trade-time">just now</span>
+                    </div>
+                    <div class="trade-action">
+                        <span class="trade-type buy">BUY</span>
+                        <span>${t.token} · $${t.value.toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('') || '<div style="color:var(--muted);font-size:11px">No trades yet</div>';
+        }
         
-        // Activity feed
-        const feed = document.getElementById('feed');
-        const demoActivity = [
-            { time: '18:15', agent: 'alpha', action: 'buy', text: 'Bought $30,000 SOL @ $106.40' },
-            { time: '18:15', agent: 'beta', action: 'buy', text: 'Bought $20,000 WIF @ $0.20' },
-            { time: '18:15', agent: 'gamma', action: 'buy', text: 'Bought $15,000 BONK @ $0.000003' },
-            { time: '18:14', agent: 'alpha', action: 'think', text: 'Researching market trends...' },
-            { time: '18:14', agent: 'beta', action: 'think', text: 'Analyzing token liquidity...' },
-            { time: '18:14', agent: 'gamma', action: 'think', text: 'Reading crypto news...' },
-        ];
-        
-        feed.innerHTML = demoActivity.map(a => `
-            <div class="feed-item">
-                <span class="feed-time">${a.time}</span>
-                <span class="feed-agent">${a.agent}</span>
-                <span class="feed-action feed-${a.action}">${a.action === 'buy' ? '📈' : a.action === 'sell' ? '📉' : '🤔'} ${a.text}</span>
-            </div>
-        `).join('');
+        render();
     </script>
 </body>
 </html>
